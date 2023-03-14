@@ -1,9 +1,16 @@
 import 'package:cantwait28/models/item_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ItemRepository {
   Stream<List<ItemModel>> getItemsStream() {
+    final userID = FirebaseAuth.instance.currentUser?.uid;
+    if (userID == null) {
+      throw Exception('You must Logged in');
+    }
     return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userID)
         .collection('items')
         .orderBy('release_date')
         .snapshots()
@@ -20,7 +27,17 @@ class ItemRepository {
   }
 
   Future<void> delete({required String id}) async {
-    await FirebaseFirestore.instance.collection('items').doc(id).delete();
+    final userID = FirebaseAuth.instance.currentUser?.uid;
+    if (userID == null) {
+      throw Exception('You must Logged in');
+    }
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userID)
+        .collection('items')
+        .doc(id)
+        .delete();
   }
 
   Future<void> add(
@@ -28,7 +45,15 @@ class ItemRepository {
     String imageURL,
     DateTime releaseDate,
   ) async {
-    await FirebaseFirestore.instance.collection('items').add(
+    final userID = FirebaseAuth.instance.currentUser?.uid;
+    if (userID == null) {
+      throw Exception('You must Logged in');
+    }
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userID)
+        .collection('items')
+        .add(
       {
         'title': title,
         'image_url': imageURL,
@@ -38,8 +63,16 @@ class ItemRepository {
   }
 
   Future<ItemModel> get({required String id}) async {
-    final doc =
-        await FirebaseFirestore.instance.collection('items').doc(id).get();
+    final userID = FirebaseAuth.instance.currentUser?.uid;
+    if (userID == null) {
+      throw Exception('You must Logged in');
+    }
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userID)
+        .collection('items')
+        .doc(id)
+        .get();
     return ItemModel(
       id: doc.id,
       title: doc['title'],
